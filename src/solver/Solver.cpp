@@ -175,16 +175,10 @@ void Solver::solve()
   {
     glp_set_row_name(lp, i + 1, constraints[i].get_name().c_str());
 
-    if (constraints[i].get_name().compare("Cons") == 0)
-      glp_set_row_bnds(lp, i + 1,
-		       GLP_FX,
-		       constraints[i].get_bound().get_lvalue(),
-		       constraints[i].get_bound().get_rvalue());
-    else
-      glp_set_row_bnds(lp, i + 1,
-		       GLP_UP,
-		       constraints[i].get_bound().get_lvalue(),
-		       constraints[i].get_bound().get_rvalue());
+    glp_set_row_bnds(lp, i + 1,
+		     GLP_UP,
+		     constraints[i].get_bound().get_lvalue(),
+		     constraints[i].get_bound().get_rvalue());
   }
 
   for (int i = 0; i < vars.size(); i++)
@@ -199,6 +193,8 @@ void Solver::solve()
     glp_set_col_kind(lp, i + 1, GLP_IV);
   }
 
+  ia[0] = 0;
+  ja[0] = 0;
   for (int i = 0; i < constraints.size(); i++)
     for (int j = 0; j < vars.size(); j++)
     {
@@ -206,6 +202,12 @@ void Solver::solve()
       ja[1 + i * vars.size() + j] = j + 1;
       ar[1 + i * vars.size() + j] = constraints[i].get_var_coef(vars[j]);
     }
+
+  for (int i = 0; i < 1 + nb_cells; i++)
+  {
+    if (ar[i] != 1)
+      ar[i] = 0;
+  }
 
   glp_load_matrix(lp, nb_cells, ia, ja, ar);
   glp_simplex(lp, NULL);
